@@ -1,4 +1,4 @@
-import type { TemplateOperatorConfig, ValueType } from './type'
+import type { TemplateOperatorConfig, ValueType } from '../types/index'
 
 export class TemplateOperator {
   private config
