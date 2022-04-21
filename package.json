@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "vite build",
-    "test": "node test/coordinate.js",
+    "test": "vitest",
     "lint": "eslint . --fix --ext .ts,.js --ignore-pattern \"/lib/\"",
     "prettier": "prettier --write \"src/*.ts\" --ignore-unknown",
     "prepare": "husky install"
@@ -32,6 +32,9 @@
     "vite": "^2.9.5",
     "vite-plugin-dts": "^1.1.0",
     "vitest": "^0.9.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "repository": {
     "type": "git",
