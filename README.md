@@ -4,7 +4,21 @@
 
 ## Usage
 
-check [Coordinate](./test/coordinate.ts)
+- simple to use
+
+```js
+const operator = (type, val1, val2) => {
+  if (type === '~') {
+    return (val1 + val2) * (val2 + 1 - val1) / 2
+  }
+}
+const calc = createCalc({ operator })
+
+console.log(calc`${1} ~ ${100}`) // 5050
+console.log(calc`${23} ~ ${86}`) // 3488
+```
+
+- use by class, eg [Coordinate](./test/coordinate.ts)
 
 ```js
 const a = new Coordinate(100, 100)
