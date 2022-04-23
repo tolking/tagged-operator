@@ -16,8 +16,10 @@ export function createPipeCalc({
         return operator(_item, all, arg[index])
       } else if (index !== 0 && index !== len - 1) {
         console.warn('miss operator')
+      } else if (index === 0) {
+        all = arg[index]
       }
       return all
-    }, arg[0])
+    }, undefined as ValueType)
   }
 }
