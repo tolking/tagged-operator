@@ -1,4 +1,4 @@
-# template-operator [demo]
+# template-operator [alpha]
 
 > Simulate operator overloading with template strings
 

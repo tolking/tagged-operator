@@ -49,4 +49,22 @@ describe('coordinate calc', () => {
     expect(result.x).toBe(300)
     expect(result.y).toBe(100)
   })
+
+  test.concurrent('-a', () => {
+    const result = a.calc`-${a}`
+
+    expect(result).toBeDefined()
+    expect(result).toBeInstanceOf(Coordinate)
+    expect(result.x).toBe(-100)
+    expect(result.y).toBe(-100)
+  })
+
+  test.concurrent('-a - b', () => {
+    const result = a.calc`-${a} - ${b}`
+
+    expect(result).toBeDefined()
+    expect(result).toBeInstanceOf(Coordinate)
+    expect(result.x).toBe(-100)
+    expect(result.y).toBe(-300)
+  })
 })
