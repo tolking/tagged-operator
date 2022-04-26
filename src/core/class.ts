@@ -1,10 +1,10 @@
-import { createCalc, createPipeCalc } from './index'
+import { createCalc, createPrecedenceCalc, createPipeCalc } from './index'
 import type { TemplateOperatorConfig } from '../types/index'
 
 /**
  * Implementing template calculations through class
  *
- * eg:
+ * eg: [demo](https://github.com/tolking/template-operator/blob/main/src/core/class.test.ts)
  *
  * ```
  *  const operator = (type, val1, val2) => {
@@ -32,8 +32,12 @@ export class TemplateOperator {
   public calc
 
   constructor(config: TemplateOperatorConfig) {
-    this.calc =
-      config.precedence === false ? createPipeCalc(config) : createCalc(config)
-    // TODO: add more operations, eg: compare? ...
+    if (config.type === 'pipe') {
+      this.calc = createPipeCalc(config)
+    } else if (config.type === 'precedence') {
+      this.calc = createPrecedenceCalc(config)
+    } else {
+      this.calc = createCalc(config)
+    }
   }
 }

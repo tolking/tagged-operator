@@ -2,19 +2,19 @@ import { precedenceToRegExp } from '../utils/index'
 import type { TemplateOperatorConfig, ValueType } from '../types/index'
 
 /**
- * Create a calculator that executes with precedence
+ * Create a calculator that executes with precedence and grouping operators `()`.
  * @param config.operator How the match operator is evaluated
  * @param config.precedence Configure operator precedence information
  *
  * eg:
  *
  * ```
- *  const precedence: Precedence = { 2: ['!'], 1: ['*', '/'] }
- *  const factorial = (num: number, total = num): number => {
+ *  const precedence = { 2: ['!'], 1: ['*', '/'] }
+ *  const factorial = (num, total) => {
  *    if (num <= 1) return total * 1
  *    return factorial(num - 1, total * (num - 1))
  *  }
- *  const operator: Operator = (type, val1, val2) => {
+ *  const operator = (type, val1, val2) => {
  *    switch (type) {
  *      case '+':
  *        return val1 + val2
@@ -37,12 +37,14 @@ import type { TemplateOperatorConfig, ValueType } from '../types/index'
  * ```
  */
 export function createCalc(config: TemplateOperatorConfig) {
-  // When value is false, will not contain any precedence. just return `createPipeCalc()`
-  if (config.precedence === false) return createPipeCalc(config)
-  // Match operator by RegExp
-  const precedenceRegExp = precedenceToRegExp(config.precedence)
+  const precedenceClac = createPrecedenceCalc(config)
 
   return (strings: TemplateStringsArray, ...arg: ValueType[]) => {
+    // If the operator does not contain `(` `)`, call the `createPrecedenceCalc` directly
+    if (!/[(|)]/.test(strings.join(''))) {
+      return precedenceClac(strings as unknown as TemplateStringsArray, ...arg)
+    }
+
     // The `_` variables indicate related data to be calculated
     // operator to be processed
     const _strings = [...strings]
@@ -50,8 +52,6 @@ export function createCalc(config: TemplateOperatorConfig) {
     const _values = [...arg]
     // Record the number of grouping operators at the corresponding `_strings` position. positive number: `(`, negative number: `)`.
     const _grouping: Array<number | undefined> = []
-    // Record the number of precedence at the corresponding `_strings` position.
-    const _precedence: Array<number | undefined> = []
 
     // `index` for `strings ...`, _index for `_strings ...`
     for (let index = 0, _index = 0; index < strings.length; index++, _index++) {
@@ -89,8 +89,6 @@ export function createCalc(config: TemplateOperatorConfig) {
           // Operators remaining after eliminating grouping operators being evaluated
           const lItemRemain = lItem.slice(0, lItem.length - 1).join('(')
           const rItemRemain = right.slice(1, right.length).join(')')
-          lOperator && setPrecedence(lOperator, lIndex)
-          rOperator && setPrecedence(rOperator, _index)
 
           // Extract the operator, variable, and precedence information contained in grouping operators and start the calculation.
           const operators = [
@@ -99,102 +97,132 @@ export function createCalc(config: TemplateOperatorConfig) {
             rOperator,
           ]
           const values = _values.slice(lIndex, _index)
-          const precedence = _precedence.slice(lIndex, _index)
-          const result = createPrecedenceCalc(operators, values, precedence)
+          const result = precedenceClac(
+            operators as unknown as TemplateStringsArray,
+            ...values
+          )
 
           // Modify the `_` variables value after the calculation is complete.
           _strings.splice(lIndex, _index - lIndex + 1, lItemRemain, rItemRemain)
           _values.splice(lIndex, _index - lIndex, result)
-          _precedence.splice(lIndex, _index - lIndex)
           _grouping.splice(
             lIndex,
             _index - lIndex + 1,
             (_grouping[lIndex] as number) - 1,
             (_grouping[_index] as number) + 1
           )
-          lItemRemain && setPrecedence(lItemRemain, lIndex)
-          rItemRemain && setPrecedence(rItemRemain, lIndex + 1)
           _index = lIndex + 1
 
           // eliminates the first `)`
           right.shift()
         }
-      } else {
-        setPrecedence(item, _index)
-      }
-
-      // Calculate the remainder when the last item is reached
-      if (index === strings.length - 1) {
-        // It's all at the end, of course there can't have grouping operators.
-        const _gIndex = _grouping.findIndex((item) => item)
-
-        if (_gIndex > -1) {
-          throw new Error(
-            `a error way to used grouping operator ${strings[_gIndex]}`
-          )
-        }
-
-        return createPrecedenceCalc(_strings, _values, _precedence)
       }
     }
 
-    /**
-     * Determine the precedence of the current operator
-     * @param operator current operator
-     * @param index current index
-     */
-    function setPrecedence(operator: string, index: number) {
-      if (!precedenceRegExp) return
+    // Calculate the remainder when the last item is reached
+    // It's all at the end, of course there can't have grouping operators.
+    const _gIndex = _grouping.findIndex((item) => item)
 
-      for (const key in precedenceRegExp) {
-        const regExp = precedenceRegExp[key]
-
-        if (regExp.test(operator.trim())) {
-          _precedence[index] = parseFloat(key)
-        }
-      }
+    if (_gIndex > -1) {
+      throw new Error(
+        `a error way to used grouping operator ${strings[_gIndex]}`
+      )
     }
+
+    return precedenceClac(
+      _strings as unknown as TemplateStringsArray,
+      ..._values
+    )
   }
+}
 
-  /**
-   * Calculated by precedence information
-   * @param strings operator
-   * @param values variables
-   * @param precedence precedence information
-   */
-  function createPrecedenceCalc(
-    strings: string[],
-    values: ValueType[],
-    precedence: Array<number | undefined>
-  ) {
-    let len = precedence.filter((item) => item !== undefined).length
+/**
+ * Create a calculator that only includes precedence information, *without grouping operators `()`*
+ * @param config.operator How the match operator is evaluated
+ * @param config.precedence Configure operator precedence information
+ *
+ * eg:
+ *
+ * ```
+ *  const precedence = { 2: ['!'], 1: ['*', '/'] }
+ *  const factorial = (num, total) => {
+ *    if (num <= 1) return total * 1
+ *    return factorial(num - 1, total * (num - 1))
+ *  }
+ *  const operator = (type, val1, val2) => {
+ *    switch (type) {
+ *      case '+':
+ *        return val1 + val2
+ *      case '-':
+ *        return (val1 ?? 0) - val2
+ *      case '*':
+ *        return val1 * val2
+ *      case '/':
+ *        return val1 / val2
+ *      case '!':
+ *        return factorial(val1)
+ *      default:
+ *        console.warn(`no operator configured: ${type}`)
+ *    }
+ *  }
+ *
+ *  calc`${1} + ${2} * ${3}` // 1 + 2 * 3
+ *  calc`${3} + ${4}!` // 3 + 4!
+ * ```
+ */
+export function createPrecedenceCalc({
+  operator,
+  precedence,
+}: TemplateOperatorConfig) {
+  const pipeClac = createPipeCalc({ operator })
+  // When not contain any precedence, call the `createPipeCalc` directly.
+  if (!precedence) return pipeClac
+  // Match operator by RegExp
+  const precedenceRegExp = precedenceToRegExp(precedence)
+
+  return (strings: TemplateStringsArray, ...arg: ValueType[]) => {
+    const _strings = [...strings]
+    // Record the number of precedence at the corresponding `_strings` position.
+    const _precedence: Array<number | undefined> = []
+    let len = 0
+
+    precedenceRegExp &&
+      strings.forEach((operator, index) => {
+        for (const key in precedenceRegExp) {
+          const regExp = precedenceRegExp[key]
+
+          if (regExp.test(operator.trim())) {
+            len++
+            _precedence[index] = parseFloat(key)
+          }
+        }
+      })
 
     while (len > 0) {
       let index = 0
       let max = Number.MIN_SAFE_INTEGER
       // Find the index with the highest precedence
-      precedence.forEach((item, i) => {
+      _precedence.forEach((item, i) => {
         if (item !== undefined && item > max) {
           max = item
           index = i
         }
       })
 
-      const result = config.operator(
-        strings[index].trim(),
-        values[index - 1],
-        values[index]
+      const result = operator(
+        _strings[index].trim(),
+        arg[index - 1],
+        arg[index]
       )
 
-      strings.splice(index, 1)
-      values.splice(index - 1, 2, result)
-      precedence.splice(index, 1)
+      _strings.splice(index, 1)
+      arg.splice(index - 1, 2, result)
+      _precedence.splice(index, 1)
       len--
     }
 
-    const pipeClac = createPipeCalc({ operator: config.operator })
     // the remain calculated by `createPipeCalc`
-    return pipeClac(strings as unknown as TemplateStringsArray, ...values)
+    return pipeClac(_strings as unknown as TemplateStringsArray, ...arg)
   }
 }
 
@@ -217,9 +245,7 @@ export function createCalc(config: TemplateOperatorConfig) {
  *    calc`${value} |> ${funa} |> ${funb}` // same as funb(funa(value))
  * ```
  */
-export function createPipeCalc({
-  operator,
-}: Pick<TemplateOperatorConfig, 'operator'>) {
+export function createPipeCalc({ operator }: TemplateOperatorConfig) {
   return (strings: TemplateStringsArray, ...arg: ValueType[]) => {
     const len = strings.length
     return strings.reduce((all, item, index) => {
