@@ -13,6 +13,7 @@ export function precedenceToRegExp(precedence: Precedence) {
 
     if (!value.length) {
       console.warn(`empt: ${key}: ${value}`)
+      continue
     }
     result[key] = RegExp(`^[${value.join('|')}]$`)
   }
