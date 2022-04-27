@@ -7,7 +7,7 @@ const factorial = (num: number, total = num): number => {
   if (num <= 1) return total * 1
   return factorial(num - 1, total * (num - 1))
 }
-const operator: Operator = (type, val1, val2) => {
+const operator: Operator<number> = (type, val1, val2) => {
   switch (type) {
     case '+':
       return val1 + val2
@@ -21,6 +21,7 @@ const operator: Operator = (type, val1, val2) => {
       return factorial(val1)
     default:
       console.warn(`no operator configured: ${type}`)
+      return val1
   }
 }
 

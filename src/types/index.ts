@@ -7,11 +7,11 @@ export type ValueType = any
  * @param val1 the value to the left of the current operator
  * @param val2 the value to the right of the current operator
  */
-export type Operator = (
+export type Operator<T = ValueType, Q = T> = (
   type: string,
-  val1: ValueType,
-  val2: ValueType
-) => ValueType
+  val1: T | Q,
+  val2: T | Q
+) => Q
 
 /**
  * Configure operator precedence information.
@@ -29,9 +29,11 @@ export type Operator = (
  */
 export type Precedence = Record<number, string[]>
 
-export interface TemplateOperatorConfig {
+/** The config of template-operator */
+export interface Config<T = ValueType, Q = T> {
   /**
    * how to calculate
+   * @default default
    *
    * `default` - the config operator precedence information and grouping operators `()`.
    *
@@ -41,7 +43,7 @@ export interface TemplateOperatorConfig {
    */
   type?: 'default' | 'precedence' | 'pipe'
   /** How the match operator is evaluated */
-  operator: Operator
+  operator: Operator<T, Q>
   /** Configure operator precedence information */
   precedence?: Precedence
 }
