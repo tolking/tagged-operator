@@ -1,5 +1,5 @@
 import { precedenceToRegExp, throwError } from '../utils/index'
-import type { TemplateOperatorConfig, ValueType } from '../types/index'
+import type { Config, ValueType } from '../types/index'
 
 /**
  * Create a calculator that executes with precedence and grouping operators `()`.
@@ -36,10 +36,10 @@ import type { TemplateOperatorConfig, ValueType } from '../types/index'
  *  calc`(-(${5} + ${3}) * ${4} + ${8}) - ${6} / ${2}` // (-(5 + 3) * 4 + 8) - 6 / 2
  * ```
  */
-export function createCalc(config: TemplateOperatorConfig) {
-  const precedenceClac = createPrecedenceCalc(config)
+export function createCalc<T = ValueType, Q = T>(config: Config<T, Q>) {
+  const precedenceClac = createPrecedenceCalc<T, Q>(config)
 
-  return (strings: TemplateStringsArray, ...arg: ValueType[]) => {
+  return (strings: TemplateStringsArray, ...arg: T[]) => {
     // If the operator does not contain `(` `)`, call the `createPrecedenceCalc` directly
     if (!/[(|)]/.test(strings.join(''))) {
       return precedenceClac(strings as unknown as TemplateStringsArray, ...arg)
@@ -101,7 +101,7 @@ export function createCalc(config: TemplateOperatorConfig) {
           const result = precedenceClac(
             operators as unknown as TemplateStringsArray,
             ...values
-          )
+          ) as unknown as T
 
           // Modify the `_` variables value after the calculation is complete.
           _strings.splice(lIndex, _index - lIndex + 1, lItemRemain, rItemRemain)
@@ -167,19 +167,19 @@ export function createCalc(config: TemplateOperatorConfig) {
  *  calc`${3} + ${4}!` // 3 + 4!
  * ```
  */
-export function createPrecedenceCalc({
+export function createPrecedenceCalc<T = ValueType, Q = T>({
   operator,
   precedence,
-}: TemplateOperatorConfig) {
+}: Config<T, Q>) {
   if (!operator) throwError('The operator config is required')
 
-  const pipeClac = createPipeCalc({ operator })
+  const pipeClac = createPipeCalc<T, Q>({ operator })
   // When not contain any precedence, call the `createPipeCalc` directly.
   if (!precedence) return pipeClac
   // Match operator by RegExp
   const precedenceRegExp = precedenceToRegExp(precedence)
 
-  return (strings: TemplateStringsArray, ...arg: ValueType[]) => {
+  return (strings: TemplateStringsArray, ...arg: T[]) => {
     const _strings = [...strings]
     // Record the number of precedence at the corresponding `_strings` position.
     const _precedence: Array<number | undefined> = []
@@ -212,7 +212,7 @@ export function createPrecedenceCalc({
         _strings[index].trim(),
         arg[index - 1],
         arg[index]
-      )
+      ) as unknown as T
 
       _strings.splice(index, 1)
       arg.splice(index - 1, 2, result)
@@ -244,10 +244,12 @@ export function createPrecedenceCalc({
  *    calc`${value} |> ${funa} |> ${funb}` // same as funb(funa(value))
  * ```
  */
-export function createPipeCalc({ operator }: TemplateOperatorConfig) {
+export function createPipeCalc<T = ValueType, Q = T>({
+  operator,
+}: Config<T, Q>) {
   if (!operator) throwError('The operator config is required')
 
-  return (strings: TemplateStringsArray, ...arg: ValueType[]) => {
+  return (strings: TemplateStringsArray, ...arg: T[]) => {
     const len = strings.length
     return strings.reduce((all, item, index) => {
       const _item = item.trim()
@@ -259,6 +261,6 @@ export function createPipeCalc({ operator }: TemplateOperatorConfig) {
         all = arg[index]
       }
       return all
-    }, undefined as ValueType)
+    }, undefined as unknown as T | Q) as Q
   }
 }

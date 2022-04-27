@@ -1,5 +1,5 @@
 import { createCalc, createPrecedenceCalc, createPipeCalc } from './index'
-import type { TemplateOperatorConfig } from '../types/index'
+import type { Config, ValueType } from '../types/index'
 
 /**
  * Implementing template calculations through class
@@ -28,10 +28,10 @@ import type { TemplateOperatorConfig } from '../types/index'
  *  a.calc`${a} + ${b}` // Coordinate { x: 100, y: 300 }
  * ```
  */
-export class TemplateOperator {
+export class TemplateOperator<T = ValueType, Q = T> {
   public calc
 
-  constructor(config: TemplateOperatorConfig) {
+  constructor(config: Config<T, Q>) {
     if (config.type === 'pipe') {
       this.calc = createPipeCalc(config)
     } else if (config.type === 'precedence') {
