@@ -1,4 +1,4 @@
-import { precedenceToRegExp } from '../utils/index'
+import { precedenceToRegExp, throwError } from '../utils/index'
 import type { TemplateOperatorConfig, ValueType } from '../types/index'
 
 /**
@@ -65,8 +65,9 @@ export function createCalc(config: TemplateOperatorConfig) {
         const right = item.split(')')
 
         if (left.length > 1 && right.length > 1 && /\(.*\)/.test(item)) {
-          const err = new Error(`can not use () in one operator: ${item}`)
-          console.warn(err)
+          throwError(
+            `Can not use grouping operators within an operator, current operator ${item}`
+          )
         }
         _grouping[_index] = left.length - 1 - (right.length - 1)
 
@@ -78,7 +79,7 @@ export function createCalc(config: TemplateOperatorConfig) {
           while (lIndex >= 0) {
             if (_grouping[lIndex]) break
             if (lIndex === 0)
-              console.warn('a error way to used grouping operator ' + item)
+              throwError(`No '(' found that match the current operator ${item}`)
             lIndex--
           }
 
@@ -90,7 +91,7 @@ export function createCalc(config: TemplateOperatorConfig) {
           const lItemRemain = lItem.slice(0, lItem.length - 1).join('(')
           const rItemRemain = right.slice(1, right.length).join(')')
 
-          // Extract the operator, variable, and precedence information contained in grouping operators and start the calculation.
+          // Extract the operator and variable information contained in grouping operators and start the calculation.
           const operators = [
             lOperator,
             ..._strings.slice(lIndex + 1, _index),
@@ -123,11 +124,7 @@ export function createCalc(config: TemplateOperatorConfig) {
     // It's all at the end, of course there can't have grouping operators.
     const _gIndex = _grouping.findIndex((item) => item)
 
-    if (_gIndex > -1) {
-      throw new Error(
-        `a error way to used grouping operator ${strings[_gIndex]}`
-      )
-    }
+    if (_gIndex > -1) throwError('A error way to used grouping operator')
 
     return precedenceClac(
       _strings as unknown as TemplateStringsArray,
@@ -174,6 +171,8 @@ export function createPrecedenceCalc({
   operator,
   precedence,
 }: TemplateOperatorConfig) {
+  if (!operator) throwError('The operator config is required')
+
   const pipeClac = createPipeCalc({ operator })
   // When not contain any precedence, call the `createPipeCalc` directly.
   if (!precedence) return pipeClac
@@ -246,6 +245,8 @@ export function createPrecedenceCalc({
  * ```
  */
 export function createPipeCalc({ operator }: TemplateOperatorConfig) {
+  if (!operator) throwError('The operator config is required')
+
   return (strings: TemplateStringsArray, ...arg: ValueType[]) => {
     const len = strings.length
     return strings.reduce((all, item, index) => {
@@ -253,7 +254,7 @@ export function createPipeCalc({ operator }: TemplateOperatorConfig) {
       if (_item) {
         return operator(_item, all, arg[index])
       } else if (index !== 0 && index !== len - 1) {
-        console.warn('miss operator')
+        throwError(`The operator may be missing before the value ${arg[index]}`)
       } else if (index === 0) {
         all = arg[index]
       }

@@ -12,11 +12,28 @@ export function precedenceToRegExp(precedence: Precedence) {
     const value = precedence[key]
 
     if (!value.length) {
-      console.warn(`empt: ${key}: ${value}`)
+      throwWarn(`The precedence config is empty, ${key}: ${value}`)
       continue
     }
     result[key] = RegExp(`^[${value.join('|')}]$`)
   }
 
   return result
+}
+
+/**
+ * throw an error
+ * @param message Error message
+ */
+export function throwError(message: string) {
+  throw new Error(`template-operator Error: ${message}`)
+}
+
+/**
+ * throw a warn
+ * @param message warn message
+ */
+export function throwWarn(message: string) {
+  process.env.NODE_ENV === 'development' &&
+    console.warn(`template-operator Warn: ${message}`)
 }

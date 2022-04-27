@@ -18,7 +18,7 @@ console.log(calc`${1} ~ ${100}`) // 5050
 console.log(calc`${23} ~ ${86}`) // 3488
 ```
 
-- use by class, eg [Coordinate](./test/coordinate.ts)
+- use by class, eg [Coordinate](./src/core/class.test.ts)
 
 ```js
 const a = new Coordinate(100, 100)
