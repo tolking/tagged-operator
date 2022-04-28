@@ -34,6 +34,5 @@ export function throwError(message: string) {
  * @param message warn message
  */
 export function throwWarn(message: string) {
-  process.env.NODE_ENV === 'development' &&
-    console.warn(`TaggedOperator Warn: ${message}`)
+  console.warn(`TaggedOperator Warn: ${message}`)
 }
