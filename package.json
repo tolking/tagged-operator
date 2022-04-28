@@ -1,7 +1,7 @@
 {
-  "name": "template-operator",
+  "name": "tagged-operator",
   "version": "0.0.1",
-  "description": "Simulate operator overloading with template strings",
+  "description": "Simulate operator overloading with Tagged templates",
   "author": "tolking <qw13131wang@gmail.com>",
   "license": "MIT",
   "main": "lib/index.umd.js",
@@ -38,19 +38,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tolking/template-operator.git"
+    "url": "git+https://github.com/tolking/tagged-operator.git"
   },
   "bugs": {
-    "url": "https://github.com/tolking/template-operator/issues"
+    "url": "https://github.com/tolking/tagged-operator/issues"
   },
-  "homepage": "https://github.com/tolking/template-operator#readme",
+  "homepage": "https://github.com/tolking/tagged-operator#readme",
   "files": [
     "lib"
   ],
   "keywords": [
+    "tagged operator",
     "operator",
     "overloading",
     "template",
+    "tagged templates",
+    "template literals",
     "template strings",
     "rewrite operator"
   ],

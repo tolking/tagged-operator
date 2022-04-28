@@ -7,7 +7,7 @@ export default defineConfig({
     outDir: './lib',
     lib: {
       entry: './src/index.ts',
-      name: 'TemplateOperator',
+      name: 'TaggedOperator',
       fileName: (format) => `index.${format}.js`,
     },
   },

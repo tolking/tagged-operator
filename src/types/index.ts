@@ -29,7 +29,7 @@ export type Operator<T = ValueType, Q = T> = (
  */
 export type Precedence = Record<number, string[]>
 
-/** The config of template-operator */
+/** The config of tagged-operator */
 export interface Config<T = ValueType, Q = T> {
   /**
    * how to calculate
