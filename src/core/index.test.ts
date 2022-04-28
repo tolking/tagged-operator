@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { createCalc, createPrecedenceCalc, createPipeCalc } from './index'
+import { createTag, createPrecedenceTag, createPipeTag } from './index'
 import type { Operator, Precedence } from '../index'
 
 const precedence: Precedence = { 2: ['!'], 1: ['*', '/'] }
@@ -25,8 +25,8 @@ const operator: Operator<number> = (type, val1, val2) => {
   }
 }
 
-describe('createPipeCalc', () => {
-  const calc = createPipeCalc({ operator })
+describe('createPipeTag', () => {
+  const calc = createPipeTag({ operator })
 
   test.concurrent('1 + 2', () => {
     expect(calc`${1} + ${2}`).toBe(1 + 2)
@@ -45,8 +45,8 @@ describe('createPipeCalc', () => {
   })
 })
 
-describe('createPrecedenceCalc', () => {
-  const calc = createPrecedenceCalc({ operator, precedence })
+describe('createPrecedenceTag', () => {
+  const calc = createPrecedenceTag({ operator, precedence })
 
   test.concurrent('1 + 2 * 3', () => {
     expect(calc`${1} + ${2} * ${3}`).toBe(1 + 2 * 3)
@@ -63,8 +63,8 @@ describe('createPrecedenceCalc', () => {
   })
 })
 
-describe('createCalc', () => {
-  const calc = createCalc({ operator, precedence })
+describe('createTag', () => {
+  const calc = createTag({ operator, precedence })
 
   test.concurrent('(5 + 3)', () => {
     expect(calc`(${5} + ${3})`).toBe(5 + 3)

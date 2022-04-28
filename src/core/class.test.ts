@@ -1,8 +1,8 @@
 import { describe, test, expect } from 'vitest'
-import { TemplateOperator } from './index'
+import { TaggedOperator } from './index'
 import type { Operator, Precedence } from '../types/index'
 
-export class Coordinate extends TemplateOperator<
+export class Coordinate extends TaggedOperator<
   Coordinate | number,
   Coordinate
 > {

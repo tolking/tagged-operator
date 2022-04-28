@@ -1,10 +1,10 @@
-import { createCalc, createPrecedenceCalc, createPipeCalc } from './index'
+import { createTag, createPrecedenceTag, createPipeTag } from './index'
 import type { Config, ValueType } from '../types/index'
 
 /**
- * Implementing template calculations through class
+ * Create a tagged calculator through class
  *
- * eg: [demo](https://github.com/tolking/template-operator/blob/main/src/core/class.test.ts)
+ * eg: [demo](https://github.com/tolking/tagged-operator/blob/main/src/core/class.test.ts)
  *
  * ```
  *  const operator = (type, val1, val2) => {
@@ -14,7 +14,7 @@ import type { Config, ValueType } from '../types/index'
  *    //...
  *  }
  *
- *  class Coordinate extends TemplateOperator {
+ *  class Coordinate extends TaggedOperator {
  *    constructor(x: number, y: number) {
  *      super({ operator, precedence })
  *      this.x = x
@@ -28,16 +28,16 @@ import type { Config, ValueType } from '../types/index'
  *  a.calc`${a} + ${b}` // Coordinate { x: 100, y: 300 }
  * ```
  */
-export class TemplateOperator<T = ValueType, Q = T> {
+export class TaggedOperator<T = ValueType, Q = T> {
   public calc
 
   constructor(config: Config<T, Q>) {
     if (config.type === 'pipe') {
-      this.calc = createPipeCalc(config)
+      this.calc = createPipeTag<T, Q>(config)
     } else if (config.type === 'precedence') {
-      this.calc = createPrecedenceCalc(config)
+      this.calc = createPrecedenceTag<T, Q>(config)
     } else {
-      this.calc = createCalc(config)
+      this.calc = createTag<T, Q>(config)
     }
   }
 }

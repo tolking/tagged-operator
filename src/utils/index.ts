@@ -26,7 +26,7 @@ export function precedenceToRegExp(precedence: Precedence) {
  * @param message Error message
  */
 export function throwError(message: string) {
-  throw new Error(`template-operator Error: ${message}`)
+  throw new Error(`TaggedOperator Error: ${message}`)
 }
 
 /**
@@ -34,6 +34,5 @@ export function throwError(message: string) {
  * @param message warn message
  */
 export function throwWarn(message: string) {
-  process.env.NODE_ENV === 'development' &&
-    console.warn(`template-operator Warn: ${message}`)
+  console.warn(`TaggedOperator Warn: ${message}`)
 }
