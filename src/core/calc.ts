@@ -1,4 +1,4 @@
-import { precedenceToRegExp, throwError } from '../utils/index'
+import { Cache, precedenceToRegExp, throwError } from '../utils/index'
 import type { Config, ValueType } from '../types/index'
 
 /**
@@ -44,88 +44,80 @@ export function createTag<T = ValueType, Q = T>(config: Config<T, Q>) {
   return (strings: TemplateStringsArray, ...arg: T[]) => {
     // If the operator does not contain `(` `)`, call the `createPrecedenceTag` directly
     if (!/[(|)]/.test(strings.join(''))) return precedenceCalc(strings, ...arg)
+    // Store the data to be calculated through the Cache
+    const cache = new Cache<{ operators: string[]; values: T[] }>()
 
-    // The `_` variables indicate related data to be calculated
-    // operator to be processed
-    const _strings = [...strings]
-    // values to be processed
-    const _values = [...arg]
-    // Record the number of grouping operators at the corresponding `_strings` position. positive number: `(`, negative number: `)`.
-    const _grouping: Array<number | undefined> = []
-
-    // `index` for `strings ...`, _index for `_strings ...`
-    for (let index = 0, _index = 0; index < strings.length; index++, _index++) {
-      // current operator
+    for (let index = 0, len = strings.length; index < len; index++) {
       const item = strings[index]
       const hasGrouping = /[(|)]/.test(item)
 
       // The grouping operators have the highest precedence
       if (hasGrouping) {
-        const left = item.split('(')
-        const right = item.split(')')
-
-        if (left.length > 1 && right.length > 1 && /\(.*\)/.test(item)) {
+        if (/\(.*\)/.test(item)) {
           throwError(
             `Can not use grouping operators within an operator, current operator ${item}`
           )
         }
-        _grouping[_index] = left.length - 1 - (right.length - 1)
-
-        // Start evaluating grouping operators when the current operator includes `)`.
-        // There may be multiple `)`, so here one by one eliminates the `)`.
+        const right = item.split(')')
+        // Eliminates the `)` have the highest precedence
         while (right.length > 1) {
-          let lIndex = _index - 1
-          // Find the nearest closing `(` to the left
-          while (lIndex >= 0) {
-            if (_grouping[lIndex]) break
-            if (lIndex === 0)
-              throwError(`No '(' found that match the current operator ${item}`)
-            lIndex--
-          }
-
-          // There may also be an operator in a grouping operators, get it here
-          const lItem = _strings[lIndex].split('(')
-          const lOperator = lItem[lItem.length - 1].trim()
-          const rOperator = right[0].trim()
-          // Operators remaining after eliminating grouping operators being evaluated
-          const lItemRemain = lItem.slice(0, lItem.length - 1).join('(')
-          const rItemRemain = right.slice(1, right.length).join(')')
-
-          // Extract the operator and variable information contained in grouping operators and start the calculation.
-          const operators = [
-            lOperator,
-            ..._strings.slice(lIndex + 1, _index),
-            rOperator,
+          const { operators, values } = cache.getCurrent()
+          const _operators = [
+            ...operators,
+            right[0],
           ] as unknown as TemplateStringsArray
-          const values = _values.slice(lIndex, _index)
-          const result = precedenceCalc(operators, ...values) as unknown as T
+          const result = precedenceCalc(_operators, ...values) as unknown as T
 
-          // Modify the `_` variables value after the calculation is complete.
-          _strings.splice(lIndex, _index - lIndex + 1, lItemRemain, rItemRemain)
-          _values.splice(lIndex, _index - lIndex, result)
-          _grouping.splice(
-            lIndex,
-            _index - lIndex + 1,
-            (_grouping[lIndex] as number) - 1,
-            (_grouping[_index] as number) + 1
-          )
-          _index = lIndex + 1
-
-          // eliminates the first `)`
+          cache.remove()
+          cache.setCurrent((pre) => ({
+            operators: pre?.operators || [],
+            values: [...(pre?.values || []), result],
+          }))
+          //  eliminates the first `)`
           right.shift()
         }
+
+        const left = right[0].split('(')
+
+        if (left.length > 1) {
+          // After split `(`, the first item operator is distributed to the current, and the rest will add corresponding cache items respectively.
+          cache.setCurrent((pre) => ({
+            operators: [...(pre?.operators || []), left[0]],
+            values: pre?.values || [],
+          }))
+          left.shift()
+          cache.add(
+            ...left.map((item, i) => ({
+              operators: [item],
+              values: left.length - 1 === i ? [arg[index]] : [],
+            }))
+          )
+        } else {
+          cache.setCurrent((pre) => ({
+            operators: [...(pre?.operators || []), right[0]],
+            values: [...(pre?.values || []), arg[index]],
+          }))
+        }
+      } else {
+        cache.setCurrent((pre) => ({
+          operators: [...(pre?.operators || []), item],
+          values:
+            len - 1 !== index
+              ? [...(pre?.values || []), arg[index]]
+              : pre?.values || [],
+        }))
       }
     }
 
     // Calculate the remainder when the last item is reached
     // It's all at the end, of course there can't have grouping operators.
-    const _gIndex = _grouping.findIndex((item) => item)
+    if (cache.length() > 1) throwError('A error way to used grouping operator')
 
-    if (_gIndex > -1) throwError('A error way to used grouping operator')
+    const { operators, values } = cache.getCurrent()
 
     return precedenceCalc(
-      _strings as unknown as TemplateStringsArray,
-      ..._values
+      operators as unknown as TemplateStringsArray,
+      ...values
     )
   }
 }
