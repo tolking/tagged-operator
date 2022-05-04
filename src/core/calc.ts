@@ -172,44 +172,28 @@ export function createPrecedenceTag<T = ValueType, Q = T>({
 
   return (strings: TemplateStringsArray, ...arg: T[]) => {
     const _strings = [...strings]
-    // Record the number of precedence at the corresponding `_strings` position.
-    const _precedence: Array<number | undefined> = []
-    let len = 0
+
+    // Calculate items with precedence
+    function calcPrecedence(regExp: RegExp) {
+      const index = _strings.findIndex((item) => regExp.test(item.trim()))
+
+      if (index > -1) {
+        const result = operator(
+          _strings[index].trim(),
+          arg[index - 1],
+          arg[index]
+        ) as unknown as T
+
+        _strings.splice(index, 1)
+        arg.splice(index - 1, 2, result)
+        calcPrecedence(regExp)
+      }
+    }
 
     precedenceRegExp &&
-      strings.forEach((operator, index) => {
-        for (const key in precedenceRegExp) {
-          const regExp = precedenceRegExp[key]
-
-          if (regExp.test(operator.trim())) {
-            len++
-            _precedence[index] = parseFloat(key)
-          }
-        }
-      })
-
-    while (len > 0) {
-      let index = 0
-      let max = Number.MIN_SAFE_INTEGER
-      // Find the index with the highest precedence
-      _precedence.forEach((item, i) => {
-        if (item !== undefined && item > max) {
-          max = item
-          index = i
-        }
-      })
-
-      const result = operator(
-        _strings[index].trim(),
-        arg[index - 1],
-        arg[index]
-      ) as unknown as T
-
-      _strings.splice(index, 1)
-      arg.splice(index - 1, 2, result)
-      _precedence.splice(index, 1)
-      len--
-    }
+      Object.entries(precedenceRegExp)
+        .sort((a, b) => parseFloat(b[0]) - parseFloat(a[0]))
+        .forEach(([, regExp]) => calcPrecedence(regExp))
 
     // the remain calculated by `createPipeTag`
     return pipeCalc(_strings as unknown as TemplateStringsArray, ...arg)
