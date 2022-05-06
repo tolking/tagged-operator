@@ -175,18 +175,23 @@ export function createPrecedenceTag<T = ValueType, Q = T>({
 
     // Calculate items with precedence
     function calcPrecedence(regExp: RegExp) {
-      const index = _strings.findIndex((item) => regExp.test(item.trim()))
+      let index = 0
 
-      if (index > -1) {
-        const result = operator(
-          _strings[index].trim(),
-          arg[index - 1],
-          arg[index]
-        ) as unknown as T
+      while (index < _strings.length) {
+        const item = _strings[index].trim()
 
-        _strings.splice(index, 1)
-        arg.splice(index - 1, 2, result)
-        calcPrecedence(regExp)
+        if (regExp.test(item)) {
+          const result = operator(
+            item,
+            arg[index - 1],
+            arg[index]
+          ) as unknown as T
+
+          _strings.splice(index, 1)
+          arg.splice(index - 1, 2, result)
+        } else {
+          index++
+        }
       }
     }
 
