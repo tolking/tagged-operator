@@ -15,7 +15,17 @@ export function precedenceToRegExp(precedence: Precedence) {
       throwWarn(`The precedence config is empty, ${key}: ${value}`)
       continue
     }
-    result[key] = RegExp(`^[${value.join('|')}]$`)
+    result[key] = RegExp(
+      `^(${value.reduce((all, item) => {
+        if (typeof item !== 'string' || item === '') {
+          throwWarn(
+            `The operator can only be a non-empty string, ${key}: [${item}]`
+          )
+          return all
+        }
+        return `${all}${all ? '|' : ''}[${item}]`
+      }, '')})$`
+    )
   }
 
   return result
