@@ -17,13 +17,13 @@ export function precedenceToRegExp(precedence: Precedence) {
     }
     result[key] = RegExp(
       `^(${value.reduce((all, item) => {
-        if (typeof item !== 'string' || item === '') {
+        if (typeof item !== 'string' || item.trim() === '') {
           throwWarn(
             `The operator can only be a non-empty string, ${key}: [${item}]`
           )
           return all
         }
-        return `${all}${all ? '|' : ''}[${item}]`
+        return `${all}${all ? '|' : ''}[${item.trim()}]`
       }, '')})$`
     )
   }
