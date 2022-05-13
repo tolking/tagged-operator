@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.3
+
+perf
+
+- reduce unnecessary traversal
+
+fix
+
+- cannot match some special symbols
+
 ## 0.0.2
 
 perf
